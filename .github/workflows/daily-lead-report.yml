@@ -1,0 +1,74 @@
+name: Daily PadelTech lead report
+
+on:
+  schedule:
+    # 05:30 UTC = 06:30 UK summer time / 05:30 UK winter time.
+    # GitHub can start scheduled jobs up to ~30 minutes late, so the email
+    # normally lands between 6 and 7am.
+    - cron: "30 5 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "normal = real report; test = small sample, [TEST] email, memory not saved"
+        type: choice
+        options: [test, normal]
+        default: test
+
+permissions:
+  contents: write  # lets the job save its memory file back to the repository
+
+concurrency:
+  group: daily-lead-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Build and email the report
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+          MAX_ANALYSES_PER_RUN: ${{ inputs.mode == 'test' && '8' || '' }}
+          MAX_CONTACT_RESEARCH_PER_RUN: ${{ inputs.mode == 'test' && '2' || '' }}
+        run: |
+          if [ "${{ inputs.mode }}" = "test" ]; then
+            python -m padeltech_leads.main --test-email
+          else
+            python -m padeltech_leads.main
+          fi
+
+      - name: Save memory (which leads have already been reported)
+        if: success() && inputs.mode != 'test'
+        run: |
+          git config user.name "padeltech-lead-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add state/leads_state.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update lead memory $(date -u +%F)"
+            git push
+          fi
+
+      - name: Keep a copy of the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lead-report-${{ github.run_id }}
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 30
