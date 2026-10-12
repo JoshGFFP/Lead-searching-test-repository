@@ -1,5 +1,7 @@
 """Send the report by email over SMTP (works with Purelymail, Gmail, Outlook...)."""
 
+import mimetypes
+import os
 import smtplib
 import ssl
 from email.message import EmailMessage
@@ -12,7 +14,7 @@ class EmailNotConfigured(RuntimeError):
     pass
 
 
-def send(subject: str, text: str, html: str):
+def send(subject: str, text: str, html: str, attachments: list[str] | None = None):
     missing = [name for name, value in (("SMTP_USERNAME", config.SMTP_USERNAME),
                                         ("SMTP_PASSWORD", config.SMTP_PASSWORD),
                                         ("EMAIL_TO", config.EMAIL_TO)) if not value]
@@ -27,6 +29,11 @@ def send(subject: str, text: str, html: str):
     msg["Message-ID"] = make_msgid(domain=config.EMAIL_FROM.split("@")[-1] or None)
     msg.set_content(text)
     msg.add_alternative(html, subtype="html")
+    for path in attachments or []:
+        ctype = mimetypes.guess_type(path)[0] or "application/octet-stream"
+        maintype, subtype = ctype.split("/", 1)
+        with open(path, "rb") as f:
+            msg.add_attachment(f.read(), maintype=maintype, subtype=subtype, filename=os.path.basename(path))
 
     context = ssl.create_default_context()
     if config.SMTP_PORT == 465:

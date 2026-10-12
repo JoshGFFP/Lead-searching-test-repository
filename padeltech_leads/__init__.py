@@ -1,1 +1,1 @@
-"""PadelTech daily planning-application lead report."""
+"""PadelTech weekly planning-application lead report."""

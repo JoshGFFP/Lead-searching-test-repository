@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
-# Published per-million-token prices, used only to log an estimated daily cost.
+# Published per-million-token prices, used only to log an estimated cost per run.
 PRICES = {"claude-opus-5-5": (4.00, 20.00), "claude-sonnet-5-5": (2.00, 10.00), "claude-haiku-4-5": (1.00, 5.00)}
 
 COMPANY_CONTEXT = """\

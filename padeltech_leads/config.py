@@ -62,8 +62,8 @@ NOISY_GROUP_EXCLUDED_APP_TYPES = {"Trees", "Advertising", "Telecoms", "Condition
 CLAUDE_MODEL = _env_str("CLAUDE_MODEL", "claude-opus-5-5")
 TRIAGE_BATCH_SIZE = 40
 # Safety caps so a strange day can never run up a large bill.
-MAX_ANALYSES_PER_RUN = _env_int("MAX_ANALYSES_PER_RUN", 60)
-MAX_CONTACT_RESEARCH_PER_RUN = _env_int("MAX_CONTACT_RESEARCH_PER_RUN", 5)
+MAX_ANALYSES_PER_RUN = _env_int("MAX_ANALYSES_PER_RUN", 150)
+MAX_CONTACT_RESEARCH_PER_RUN = _env_int("MAX_CONTACT_RESEARCH_PER_RUN", 10)
 # Only research contacts for leads scoring at least this much.
 CONTACT_RESEARCH_MIN_SCORE = 60
 
@@ -86,5 +86,6 @@ EMAIL_TO = [a.strip() for a in os.environ.get("EMAIL_TO", "").split(",") if a.st
 
 STATE_PATH = _env_str("STATE_PATH", "state/leads_state.json")
 REPORT_DIR = _env_str("REPORT_DIR", "reports")
+SPREADSHEET_NAME = "PadelTech_leads.xlsx"
 # Forget applications we haven't seen change for this long.
 STATE_RETENTION_DAYS = 400

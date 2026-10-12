@@ -1,12 +1,12 @@
 # Setup guide (no coding needed)
 
 The system is already built. It lives in this GitHub repository and runs
-itself every morning on GitHub's free servers. It only needs two things from you:
+itself every Monday morning on GitHub's free servers. It only needs two things from you:
 
 1. A **Claude API key**, so it can analyse applications.
 2. Your **email login**, so it can send the report.
 
-Both are stored as **GitHub secrets**: encrypted values that only the daily job
+Both are stored as **GitHub secrets**: encrypted values that only the weekly job
 can read. Nobody can view a secret after it's saved, not even you.
 **Never paste a key or password into a chat, email or file.** It only ever goes in
 the GitHub secrets boxes described below.
@@ -51,13 +51,13 @@ Your domain's email is hosted by **Purelymail**, which the system uses by defaul
 
 1. Click the **Actions** tab at the top of the repository.
    (If GitHub asks, click **I understand my workflows, go ahead and enable them**.)
-2. In the left list click **Daily PadelTech lead report**.
+2. In the left list click **Weekly PadelTech lead report**.
 3. On the right click **Run workflow** → leave *mode* as **test** → click the green **Run workflow**.
 4. Wait 3–8 minutes. A yellow dot means it's running; a green tick means done.
-5. Check your inbox for an email starting **[TEST] PadelTech leads**.
-   It analyses only a small sample, so it costs pennies and doesn't affect the daily memory.
+5. Check your inbox for an email starting **[TEST] PadelTech weekly leads**.
+   It analyses only a small sample, so it costs pennies and doesn't affect the system's memory.
 
-✅ Got the email? You're finished. The real report arrives every morning from tomorrow.
+✅ Got the email? You're finished. The real report arrives every Monday morning.
 
 ❌ Red cross instead? Click the failed run → click **report** → scroll to the red
 text. The last lines say what went wrong (usually a mistyped secret). Fix the secret
@@ -65,9 +65,9 @@ and run the test again.
 
 ---
 
-## Day to day
+## Week to week
 
-* **Nothing to do.** The report arrives every morning between about 6 and 7am.
+* **Nothing to do.** The report arrives every Monday between about 6 and 7am, with the Excel lead database attached.
 * The **first real report** covers roughly the last week, so it'll be longer than usual.
   From then on you only get new applications and meaningful changes.
 * If a run ever fails you get a "⚠️ lead report failed" email, and GitHub also

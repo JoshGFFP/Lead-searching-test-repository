@@ -1,6 +1,6 @@
-# PadelTech daily lead report
+# PadelTech weekly lead report
 
-Every morning this system emails a short list of UK planning applications that
+Every Monday morning this system emails a short list of UK planning applications that
 look like real sales opportunities for PadelTech: new padel courts, padel
 centres, tennis-to-padel conversions, sports clubs, hotels, gyms, schools and
 leisure schemes that could include padel.
@@ -10,7 +10,7 @@ leisure schemes that could include padel.
 ## How it works
 
 ```
- ⏰ 6–7am every day (GitHub Actions, free)
+ ⏰ Monday 6–7am every week (GitHub Actions, free)
         │
         ▼
  📥 UK PlanIt: every application mentioning padel, tennis courts, sports/leisure
@@ -30,11 +30,12 @@ leisure schemes that could include padel.
  🔎 Claude contact research for GOOD/HOT leads (official websites only)
         │
         ▼
- 📧 Email: 🔥 HOT / 🟠 GOOD / 👀 WATCH + daily summary
+ 📧 Email: 🔥 HOT / 🟠 GOOD / 👀 WATCH + weekly summary
+     + 📎 PadelTech_leads.xlsx: every lead found so far
 ```
 
 * **No spreadsheet, no database to manage.** The system's memory is one file,
-  `state/leads_state.json`, which the daily job updates by itself. It records
+  `state/leads_state.json`, which the weekly job updates by itself. It records
   which applications have already been seen and reported, so you only get a lead
   again when something meaningful happens.
 * **Events it alerts on:** 🆕 new padel application · ✅ permission granted ·
@@ -42,7 +43,12 @@ leisure schemes that could include padel.
   conditions being discharged) · 🏢 major developer identified. Refusals and
   withdrawals of earlier leads appear as one-line updates.
 * **Quality over quantity:** anything scoring under 40 is never emailed. On a
-  quiet day you get a short "no new qualified leads" email, so you know it ran.
+  quiet week you get a short "no new qualified leads" email, so you know it ran.
+* **Excel lead database:** every email has `PadelTech_leads.xlsx` attached: one row
+  per lead ever found (score, courts, applicant, agent, council, status, contacts,
+  update history, link), with filters and a "New this week" column. It's rebuilt
+  from the memory file every week, so it's always complete. It's a read-only export;
+  notes typed into a downloaded copy aren't read back.
 * **No invented facts:** Claude must answer "Unknown" when the record doesn't
   say. Anything that is Claude's judgement is labelled "AI inference" in the
   email. Contact details are only included if they were seen on an official page.
@@ -71,8 +77,8 @@ Bands: **80–100 🔥 HOT · 60–79 🟠 GOOD · 40–59 👀 WATCH · 0–39 
 | Item | Cost |
 |---|---|
 | UK PlanIt planning data | Free (donations welcome at planit.org.uk) |
-| GitHub Actions (the daily schedule) | Free: one run uses ~5 of the 2,000 free minutes/month |
-| Claude API | Estimated $0.50–1.50 per day, about **£12–35/month**, mostly the contact research on good leads. The first few runs cost more (up to ~$5/day) while they catch up on recent weeks. Each run logs its estimated cost; set a monthly spending limit in the Anthropic Console |
+| GitHub Actions (the weekly schedule) | Free: one run uses ~10 of the 2,000 free minutes/month |
+| Claude API | Estimated $2–7 per weekly run, about **£8–25/month**, mostly the contact research on good leads. Each run logs its estimated cost; set a monthly spending limit in the Anthropic Console |
 | Email | Free (your existing mailbox) |
 
 To roughly halve the Claude cost, add a repository **variable** (Settings → Secrets and
@@ -82,7 +88,7 @@ To cut contact-research cost, lower `MAX_CONTACT_RESEARCH_PER_RUN` in `config.py
 ## Changing things
 
 Everything adjustable is in `padeltech_leads/config.py`: search keywords, how far
-back to look, score bands, daily safety caps. The send time is the `cron` line in
+back to look, score bands, per-run safety caps. The send day/time is the `cron` line in
 `.github/workflows/daily-lead-report.yml`.
 
 ## Running it on a computer (optional)

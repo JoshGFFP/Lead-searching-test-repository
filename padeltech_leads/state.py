@@ -1,5 +1,5 @@
 """The system's hidden memory: which applications it has already seen, analysed
-and reported. Stored as one JSON file that the daily job commits back to the
+and reported. Stored as one JSON file that the weekly job commits back to the
 repository, so nobody has to manage a database.
 
 It also decides, for each application PlanIt returns, whether anything
@@ -160,12 +160,54 @@ class State:
             entry["score"] = score
             entry["band"] = band
 
+    def record_lead(self, record: dict, analysis: dict, score: int, band: str, events: list[str], today: date):
+        """Keep the full details of a lead for the spreadsheet. Called for every lead
+        scoring WATCH or above, and again whenever a known lead is re-analysed."""
+        entry = self.apps[record["name"]]
+        lead = entry.get("lead") or {"first_found": today.isoformat(), "history": []}
+        party = lambda k: (analysis.get(k) or {}).get("name") or "Unknown"  # noqa: E731
+        lead.update({
+            "last_updated": today.isoformat(),
+            "band": band,
+            "score": score,
+            "headline": analysis.get("headline"),
+            "council": record.get("area_name"),
+            "reference": record.get("uid"),
+            "address": record.get("address"),
+            "postcode": record.get("postcode"),
+            "courts": analysis.get("courts"),
+            "courts_basis": analysis.get("courts_basis"),
+            "indoor_outdoor": analysis.get("indoor_outdoor"),
+            "project_type": analysis.get("project_type"),
+            "planning_stage": analysis.get("planning_stage"),
+            "applicant": party("applicant"),
+            "planning_agent": party("planning_agent"),
+            "developer": party("developer"),
+            "architect": party("architect"),
+            "operator": party("operator"),
+            "why_lead": analysis.get("why_lead"),
+            "recommended_action": analysis.get("recommended_action"),
+            "url": record.get("url") or record.get("link"),
+        })
+        labels = [EVENT_LABELS[e] for e in events if e in EVENT_LABELS]
+        if labels:
+            lead["history"].append(f"{today:%d %b %Y}: {', '.join(labels)}")
+        entry["lead"] = lead
+
+    def set_contacts(self, name: str, contacts: list[str]):
+        if self.apps.get(name, {}).get("lead") is not None:
+            self.apps[name]["lead"]["contacts"] = contacts
+
+    def leads(self) -> list[dict]:
+        return [e["lead"] for e in self.apps.values() if e.get("lead")]
+
     def mark_reported(self, name: str, today: date):
         self.apps[name]["reported_on"] = today.isoformat()
 
     def prune(self, today: date):
         cutoff = (today - timedelta(days=config.STATE_RETENTION_DAYS)).isoformat()
-        for name in [n for n, e in self.apps.items() if e.get("last_seen", "") < cutoff]:
+        # Leads are kept forever (they're the spreadsheet); everything else is forgotten eventually.
+        for name in [n for n, e in self.apps.items() if e.get("last_seen", "") < cutoff and not e.get("lead")]:
             del self.apps[name]
 
     def save(self, today: date):

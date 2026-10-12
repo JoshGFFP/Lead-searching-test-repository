@@ -1,4 +1,4 @@
-"""The daily job: PlanIt -> filter -> Claude -> score -> email.
+"""The weekly job: PlanIt -> filter -> Claude -> score -> email + Excel lead database.
 
 Run it with:
     python -m padeltech_leads.main             # real run: emails the report and saves memory
@@ -13,15 +13,15 @@ import os
 import re
 import sys
 import traceback
-from datetime import date
+from datetime import date, timedelta
 
-from . import config, mailer, planit, report, scoring
+from . import config, mailer, planit, report, scoring, spreadsheet
 from .report import Lead, Summary
 from .state import EVENT_LABELS, REREPORT_EVENTS, State, mentions_padel
 
 log = logging.getLogger("padeltech")
 
-MAX_LEADS_IN_EMAIL = 25
+MAX_LEADS_IN_EMAIL = 30
 
 
 def _test_mode_analysis(record: dict) -> dict:
@@ -57,6 +57,7 @@ def run(today: date, dry_run: bool, no_ai: bool, test_email: bool = False) -> in
     state = State()
     summary = Summary()
     since = state.lookback_start(today)
+    summary.period_start = since
     log.info("Looking for applications changed since %s (first run: %s)", since, state.is_first_run)
 
     records = planit.fetch_all(since)
@@ -96,7 +97,7 @@ def run(today: date, dry_run: bool, no_ai: bool, test_email: bool = False) -> in
     analyse_queue.sort(key=lambda x: (not mentions_padel(x[0]), "approved" not in x[1]))
     if len(analyse_queue) > config.MAX_ANALYSES_PER_RUN:
         deferred = len(analyse_queue) - config.MAX_ANALYSES_PER_RUN
-        summary.warnings.append(f"{deferred} candidates deferred to tomorrow (daily analysis cap reached)")
+        summary.warnings.append(f"{deferred} candidates deferred to next week (analysis cap reached)")
         analyse_queue = analyse_queue[:config.MAX_ANALYSES_PER_RUN]
 
     leads: list[Lead] = []
@@ -125,6 +126,8 @@ def run(today: date, dry_run: bool, no_ai: bool, test_email: bool = False) -> in
         state.remember(record, today, analysed=True, relevant=relevant, analysis=analysis,
                        score=points, band=band)
         state.apps[name]["construction"] = bool(analysis.get("construction_imminent")) or bool(previous.get("construction"))
+        if band != "IGNORE" or previous.get("lead"):
+            state.record_lead(record, analysis, points, band, events, today)
 
         already_reported = bool(previous.get("reported_on"))
         if band == "IGNORE":
@@ -147,6 +150,8 @@ def run(today: date, dry_run: bool, no_ai: bool, test_email: bool = False) -> in
         for lead in researchable[:config.MAX_CONTACT_RESEARCH_PER_RUN]:
             try:
                 lead.contacts = claude.research_contacts(lead.record, lead.analysis)
+                if lead.contacts:
+                    state.set_contacts(lead.record["name"], report.contact_lines(lead))
             except Exception as e:  # contact research is a bonus; never fail the report for it
                 log.warning("Contact research failed for %s: %s", lead.record.get("name"), e)
 
@@ -157,7 +162,9 @@ def run(today: date, dry_run: bool, no_ai: bool, test_email: bool = False) -> in
     for suffix, body in (("html", html), ("txt", text)):
         with open(os.path.join(config.REPORT_DIR, f"report-{today.isoformat()}.{suffix}"), "w", encoding="utf-8") as f:
             f.write(body)
-    log.info("Report: %s", subject)
+    workbook = os.path.join(config.REPORT_DIR, config.SPREADSHEET_NAME)
+    spreadsheet.build(workbook, state.leads(), today, week_start=today - timedelta(days=6))
+    log.info("Report: %s (%d leads in spreadsheet)", subject, len(state.leads()))
 
     if claude:
         cost = claude.estimated_cost_usd()
@@ -168,11 +175,11 @@ def run(today: date, dry_run: bool, no_ai: bool, test_email: bool = False) -> in
         return 0
 
     if test_email:
-        mailer.send("[TEST] " + subject, text, html)
+        mailer.send("[TEST] " + subject, text, html, attachments=[workbook])
         log.info("Test email sent to %s (memory not saved)", ", ".join(config.EMAIL_TO))
         return 0
 
-    mailer.send(subject, text, html)
+    mailer.send(subject, text, html, attachments=[workbook])
     log.info("Email sent to %s", ", ".join(config.EMAIL_TO))
     for lead in leads:
         state.mark_reported(lead.record["name"], today)
@@ -181,7 +188,7 @@ def run(today: date, dry_run: bool, no_ai: bool, test_email: bool = False) -> in
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description="PadelTech daily planning lead report")
+    parser = argparse.ArgumentParser(description="PadelTech weekly planning lead report")
     parser.add_argument("--dry-run", action="store_true", help="don't email or save memory")
     parser.add_argument("--no-ai", action="store_true", help="skip Claude (pipeline test only)")
     parser.add_argument("--test-email", action="store_true",
@@ -197,10 +204,10 @@ def main(argv=None) -> int:
         if not args.dry_run:
             try:
                 mailer.send(f"⚠️ PadelTech lead report failed {today:%d %b}",
-                            f"Today's lead report could not be produced.\n\nError: {e}\n\n"
+                            f"This week's lead report could not be produced.\n\nError: {e}\n\n"
                             "Nothing has been lost: the next run will catch up automatically. "
                             "If this repeats, open the repository's Actions tab to see the full log.",
-                            f"<p>Today's lead report could not be produced.</p><p><b>Error:</b> {e}</p>"
+                            f"<p>This week's lead report could not be produced.</p><p><b>Error:</b> {e}</p>"
                             "<p>Nothing has been lost: the next run will catch up automatically. If this repeats, "
                             "open the repository's <b>Actions</b> tab to see the full log.</p>")
             except Exception as mail_error:

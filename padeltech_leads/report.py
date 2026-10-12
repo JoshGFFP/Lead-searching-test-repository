@@ -1,4 +1,4 @@
-"""Build the daily email (HTML for the inbox, plain text as a fallback)."""
+"""Build the weekly email (HTML for the inbox, plain text as a fallback)."""
 
 from dataclasses import dataclass, field
 from datetime import date
@@ -34,6 +34,7 @@ class Summary:
     checked: int = 0
     candidates: int = 0
     ai_reviewed: int = 0
+    period_start: date | None = None
     updates: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
@@ -55,7 +56,7 @@ def _courts(a: dict) -> str:
     return f"{text} (AI inference)" if a.get("courts_basis") == "inferred" else text
 
 
-def _contact_lines(lead: Lead) -> list[str]:
+def contact_lines(lead: Lead) -> list[str]:
     a = lead.analysis
     lines = []
     for c in (lead.contacts or {}).get("contacts", []):
@@ -89,16 +90,22 @@ def _fields(lead: Lead) -> list[tuple[str, str]]:
     ]
 
 
+def period(today: date, summary: Summary) -> str:
+    if summary.period_start and summary.period_start < today:
+        return f"{summary.period_start:%-d %b} – {today:%-d %B %Y}"
+    return f"{today:%-d %B %Y}"
+
+
 def subject(today: date, leads: list[Lead]) -> str:
     hot = sum(1 for l in leads if l.band == "HOT")
     good = sum(1 for l in leads if l.band == "GOOD")
     if not leads:
-        return f"PadelTech leads {today:%d %b}: no new qualified leads today"
-    return f"PadelTech leads {today:%d %b}: {hot} HOT, {good} GOOD, {len(leads) - hot - good} watch"
+        return f"PadelTech weekly leads {today:%d %b}: no new qualified leads this week"
+    return f"PadelTech weekly leads {today:%d %b}: {hot} HOT, {good} GOOD, {len(leads) - hot - good} watch"
 
 
 def render_text(today: date, leads: list[Lead], summary: Summary) -> str:
-    out = ["PADELTECH DAILY LEAD REPORT", f"{today:%-d %B %Y}", ""]
+    out = ["PADELTECH WEEKLY LEAD REPORT", period(today, summary), ""]
     n = 0
     for band, title, _ in SECTIONS:
         group = [l for l in leads if l.band == band]
@@ -115,12 +122,12 @@ def render_text(today: date, leads: list[Lead], summary: Summary) -> str:
                 out.append(f"   {label}: {value}")
             out.append(f"   Why this is a lead: {a.get('why_lead')}")
             out.append("   Potential contacts:")
-            out += [f"     - {c}" for c in _contact_lines(lead)]
+            out += [f"     - {c}" for c in contact_lines(lead)]
             out.append(f"   Recommended action: {a.get('recommended_action')}")
             out.append(f"   Official planning application: {lead.record.get('url') or lead.record.get('link')}")
             out.append("")
     if not leads:
-        out += ["No new qualified leads today.", ""]
+        out += ["No new qualified leads this week.", ""]
     if summary.updates:
         out += ["=" * 40, "ℹ️ UPDATES ON EARLIER LEADS", ""] + [f" - {u}" for u in summary.updates] + [""]
     out += _summary_lines(leads, summary)
@@ -130,7 +137,7 @@ def render_text(today: date, leads: list[Lead], summary: Summary) -> str:
 def _summary_lines(leads: list[Lead], s: Summary) -> list[str]:
     count = lambda b: sum(1 for l in leads if l.band == b)  # noqa: E731
     lines = [
-        "=" * 40, "DAILY SUMMARY", "",
+        "=" * 40, "WEEKLY SUMMARY", "",
         f"Applications checked: {s.checked:,}",
         f"Potential applications: {s.candidates:,}",
         f"AI-reviewed: {s.ai_reviewed:,}",
@@ -144,8 +151,8 @@ def _summary_lines(leads: list[Lead], s: Summary) -> list[str]:
 def render_html(today: date, leads: list[Lead], summary: Summary) -> str:
     h = [
         '<div style="font-family:Arial,Helvetica,sans-serif;max-width:680px;margin:0 auto;color:#222;line-height:1.45">',
-        '<h1 style="font-size:22px;margin:0">PADELTECH DAILY LEAD REPORT</h1>',
-        f'<p style="margin:2px 0 18px;color:#666">{today:%-d %B %Y}</p>',
+        '<h1 style="font-size:22px;margin:0">PADELTECH WEEKLY LEAD REPORT</h1>',
+        f'<p style="margin:2px 0 18px;color:#666">{escape(period(today, summary))}</p>',
     ]
     n = 0
     for band, title, colour in SECTIONS:
@@ -157,16 +164,17 @@ def render_html(today: date, leads: list[Lead], summary: Summary) -> str:
             n += 1
             h.append(_card_html(n, lead, colour))
     if not leads:
-        h.append('<p style="font-size:16px">No new qualified leads today. The system ran normally — '
+        h.append('<p style="font-size:16px">No new qualified leads this week. The system ran normally — '
                  'nothing met the quality bar.</p>')
     if summary.updates:
         h.append('<h2 style="font-size:18px;border-bottom:3px solid #999;padding-bottom:4px;margin-top:26px">ℹ️ UPDATES ON EARLIER LEADS</h2><ul>')
         h += [f"<li>{escape(u)}</li>" for u in summary.updates]
         h.append("</ul>")
     lines = _summary_lines(leads, summary)[3:]
-    h.append('<h2 style="font-size:18px;border-bottom:3px solid #999;padding-bottom:4px;margin-top:26px">DAILY SUMMARY</h2>')
+    h.append('<h2 style="font-size:18px;border-bottom:3px solid #999;padding-bottom:4px;margin-top:26px">WEEKLY SUMMARY</h2>')
     h.append('<p style="margin:0">' + "<br>".join(escape(l) for l in lines) + "</p>")
     h.append('<p style="color:#888;font-size:12px;margin-top:22px">Scores: 80–100 HOT · 60–79 GOOD · 40–59 WATCH. '
+             'Every lead found so far is in the attached spreadsheet. '
              '"AI inference" marks anything not stated in the planning record — please verify before relying on it. '
              'Data: UK PlanIt (planit.org.uk) and council planning portals.</p></div>')
     return "\n".join(h)
@@ -184,7 +192,7 @@ def _card_html(n: int, lead: Lead, colour: str) -> str:
         f'<span style="display:inline-block;background:#f3f3f3;border-radius:10px;padding:1px 8px;margin:2px 4px 2px 0;font-size:12px">{escape(EVENT_LABELS[e])}</span>'
         for e in lead.events if e in EVENT_LABELS
     )
-    contacts = "".join(f"<li>{escape(c)}</li>" for c in _contact_lines(lead))
+    contacts = "".join(f"<li>{escape(c)}</li>" for c in contact_lines(lead))
     facts = "".join(f"<li>{escape(f)}</li>" for f in a.get("confirmed_facts", [])[:5])
     inferences = "".join(f"<li>{escape(f)}</li>" for f in a.get("ai_inferences", [])[:4])
     return f"""

@@ -140,3 +140,31 @@ def test_report_renders_and_marks_inferences():
     assert "Smith Planning (AI inference)" in text
     assert "6 new outdoor padel courts" in html
     assert "no new qualified leads" in report.subject(TODAY, []).lower()
+
+
+def test_lead_is_kept_for_spreadsheet_and_survives_pruning(tmp_path):
+    from datetime import timedelta
+    state = fresh_state(tmp_path)
+    r = record()
+    state.remember(r, TODAY, analysed=True, relevant=True, analysis=analysis(), score=85, band="HOT")
+    state.record_lead(r, analysis(), 85, "HOT", ["new"], TODAY)
+    state.set_contacts(r["name"], ["XYZ Leisure Ltd — applicant · https://xyz.example"])
+    state.prune(TODAY + timedelta(days=1000))
+    [lead] = state.leads()
+    assert lead["courts"] == 6 and lead["contacts"] and "New application" in lead["history"][0]
+
+
+def test_spreadsheet_builds(tmp_path):
+    from openpyxl import load_workbook
+    from padeltech_leads import spreadsheet
+    state = fresh_state(tmp_path)
+    r = record()
+    state.remember(r, TODAY, analysed=True, relevant=True, analysis=analysis(), score=85, band="HOT")
+    state.record_lead(r, analysis(), 85, "HOT", ["new"], TODAY)
+    path = tmp_path / "leads.xlsx"
+    spreadsheet.build(str(path), state.leads(), TODAY, TODAY)
+    wb = load_workbook(path)
+    ws = wb["Leads"]
+    assert ws["A2"].value == "HOT" and ws["C2"].value == "Yes"
+    assert ws["D2"].value.startswith("6 new outdoor padel courts")
+    assert wb["Summary"]["B6"].value.startswith("=COUNTIF")

@@ -1,11 +1,11 @@
-name: Daily PadelTech lead report
+name: Weekly PadelTech lead report
 
 on:
   schedule:
-    # 05:30 UTC = 06:30 UK summer time / 05:30 UK winter time.
+    # Every Monday at 05:30 UTC = 06:30 UK summer time / 05:30 UK winter time.
     # GitHub can start scheduled jobs up to ~30 minutes late, so the email
-    # normally lands between 6 and 7am.
-    - cron: "30 5 * * *"
+    # normally lands between 6 and 7am on Monday.
+    - cron: "30 5 * * 1"
   workflow_dispatch:
     inputs:
       mode:
