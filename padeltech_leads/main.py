@@ -203,7 +203,7 @@ def main(argv=None) -> int:
         traceback.print_exc()
         if not args.dry_run:
             try:
-                mailer.send(f"⚠️ PadelTech lead report failed {today:%d %b}",
+                mailer.send(f"⚠️ Padel lead report failed {today:%d %b}",
                             f"This week's lead report could not be produced.\n\nError: {e}\n\n"
                             "Nothing has been lost: the next run will catch up automatically. "
                             "If this repeats, open the repository's Actions tab to see the full log.",

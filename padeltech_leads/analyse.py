@@ -22,8 +22,8 @@ FALLBACK_BETA = "server-side-fallback-2026-07-01"
 PRICES = {"claude-opus-5-5": (4.00, 20.00), "claude-sonnet-5-5": (2.00, 10.00), "claude-haiku-4-5": (1.00, 5.00)}
 
 COMPANY_CONTEXT = """\
-PadelTech supplies and installs padel courts in the UK (indoor, outdoor and covered/canopy courts).
-Its sales team wants planning applications where a padel court supply/installation contract could
+Our company supplies and installs padel courts in the UK (indoor, outdoor and covered/canopy courts).
+Our sales team wants planning applications where a padel court supply/installation contract could
 realistically be won: new padel courts or centres, sports/leisure facilities that include padel,
 conversion of tennis courts to padel, sports clubs expanding with padel, hotels/resorts, gyms,
 leisure centres, schools and universities adding padel, and similar."""
@@ -110,7 +110,8 @@ Rules, which matter more than anything else:
 - major_developer_involved only if a substantial developer/operator is actually named.
 - recommended_action: one concrete step, e.g. "Contact the agent (X) to ask whether a court supplier
   has been chosen", or "Wait for the decision (target date ...)".
-- Write for a busy salesperson: short, plain English, British spelling."""
+- Write for a busy salesperson: short, plain English, British spelling. Refer to our company as
+  "we"/"us" (e.g. "ask whether they have chosen a court supplier"), never by name."""
 
 TRIAGE_SCHEMA = {
     "type": "object",

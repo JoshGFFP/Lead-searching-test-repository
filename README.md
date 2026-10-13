@@ -31,7 +31,7 @@ leisure schemes that could include padel.
         │
         ▼
  📧 Email: 🔥 HOT / 🟠 GOOD / 👀 WATCH + weekly summary
-     + 📎 PadelTech_leads.xlsx: every lead found so far
+     + 📎 Padel_leads.xlsx: every lead found so far
 ```
 
 * **No spreadsheet, no database to manage.** The system's memory is one file,
@@ -44,7 +44,7 @@ leisure schemes that could include padel.
   withdrawals of earlier leads appear as one-line updates.
 * **Quality over quantity:** anything scoring under 40 is never emailed. On a
   quiet week you get a short "no new qualified leads" email, so you know it ran.
-* **Excel lead database:** every email has `PadelTech_leads.xlsx` attached: one row
+* **Excel lead database:** every email has `Padel_leads.xlsx` attached: one row
   per lead ever found (score, courts, applicant, agent, council, status, contacts,
   update history, link), with filters and a "New this week" column. It's rebuilt
   from the memory file every week, so it's always complete. It's a read-only export;

@@ -104,7 +104,7 @@ def _summary_sheet(wb: Workbook, count: int, today: date):
     bold = Font(name=FONT, bold=True)
     normal = Font(name=FONT)
     last = max(2, count + 1)
-    ws["A1"] = "PadelTech lead database"
+    ws["A1"] = "Padel lead database"
     ws["A1"].font = Font(name=FONT, bold=True, size=14)
     ws["A2"] = f"Updated automatically {today:%d %B %Y}. This file is regenerated every week, so "
     ws["A2"].font = normal

@@ -54,7 +54,7 @@ Your domain's email is hosted by **Purelymail**, which the system uses by defaul
 2. In the left list click **Weekly PadelTech lead report**.
 3. On the right click **Run workflow** → leave *mode* as **test** → click the green **Run workflow**.
 4. Wait 3–8 minutes. A yellow dot means it's running; a green tick means done.
-5. Check your inbox for an email starting **[TEST] PadelTech weekly leads**.
+5. Check your inbox for an email starting **[TEST] Weekly padel leads**.
    It analyses only a small sample, so it costs pennies and doesn't affect the system's memory.
 
 ✅ Got the email? You're finished. The real report arrives every Monday morning.

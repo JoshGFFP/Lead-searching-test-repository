@@ -86,6 +86,6 @@ EMAIL_TO = [a.strip() for a in os.environ.get("EMAIL_TO", "").split(",") if a.st
 
 STATE_PATH = _env_str("STATE_PATH", "state/leads_state.json")
 REPORT_DIR = _env_str("REPORT_DIR", "reports")
-SPREADSHEET_NAME = "PadelTech_leads.xlsx"
+SPREADSHEET_NAME = "Padel_leads.xlsx"
 # Forget applications we haven't seen change for this long.
 STATE_RETENTION_DAYS = 400

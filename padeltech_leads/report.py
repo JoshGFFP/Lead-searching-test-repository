@@ -100,12 +100,12 @@ def subject(today: date, leads: list[Lead]) -> str:
     hot = sum(1 for l in leads if l.band == "HOT")
     good = sum(1 for l in leads if l.band == "GOOD")
     if not leads:
-        return f"PadelTech weekly leads {today:%d %b}: no new qualified leads this week"
-    return f"PadelTech weekly leads {today:%d %b}: {hot} HOT, {good} GOOD, {len(leads) - hot - good} watch"
+        return f"Weekly padel leads {today:%d %b}: no new qualified leads this week"
+    return f"Weekly padel leads {today:%d %b}: {hot} HOT, {good} GOOD, {len(leads) - hot - good} watch"
 
 
 def render_text(today: date, leads: list[Lead], summary: Summary) -> str:
-    out = ["PADELTECH WEEKLY LEAD REPORT", period(today, summary), ""]
+    out = ["WEEKLY PADEL LEAD REPORT", period(today, summary), ""]
     n = 0
     for band, title, _ in SECTIONS:
         group = [l for l in leads if l.band == band]
@@ -151,7 +151,7 @@ def _summary_lines(leads: list[Lead], s: Summary) -> list[str]:
 def render_html(today: date, leads: list[Lead], summary: Summary) -> str:
     h = [
         '<div style="font-family:Arial,Helvetica,sans-serif;max-width:680px;margin:0 auto;color:#222;line-height:1.45">',
-        '<h1 style="font-size:22px;margin:0">PADELTECH WEEKLY LEAD REPORT</h1>',
+        '<h1 style="font-size:22px;margin:0">WEEKLY PADEL LEAD REPORT</h1>',
         f'<p style="margin:2px 0 18px;color:#666">{escape(period(today, summary))}</p>',
     ]
     n = 0

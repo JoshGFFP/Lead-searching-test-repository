@@ -97,7 +97,7 @@ def score(a: dict) -> tuple[int, list[str]]:
     if padel == "no":
         caps.append((30, "no padel connection"))
     if a.get("padeltech_opportunity") == "none":
-        caps.append((30, "no opportunity for PadelTech"))
+        caps.append((30, "no court-supply opportunity"))
     if stage in ("refused", "withdrawn"):
         caps.append((35, f"application {stage}"))
     for cap, why in caps:
